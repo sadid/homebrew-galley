@@ -20,22 +20,42 @@ Or in one line, without tapping first:
 brew install --cask sadid/galley/galley
 ```
 
+> **First time on Homebrew 6+:** third-party taps must be trusted once before their casks
+> will load (otherwise you'll see `Refusing to load cask … from untrusted tap`):
+>
+> ```sh
+> brew trust sadid/galley
+> ```
+
+> **Admin password required:** Galley ships as a signed `.pkg` that installs into
+> `/Applications`, so install and upgrade need your macOS admin password (`sudo`). If you
+> hit `sudo: a password is required`, your terminal didn't pass the password through —
+> pre-authenticate, then re-run:
+>
+> ```sh
+> sudo -v && brew install --cask galley
+> ```
+>
+> Optional: to approve `sudo` with Touch ID instead of typing a password, add
+> `auth sufficient pam_tid.so` to `/etc/pam.d/sudo_local`.
+
 ## Update
 
 ```sh
-brew update            # refresh tap + formula/cask definitions
+brew update            # refresh tap + cask definitions
 brew upgrade --cask galley
 ```
 
-The cask definition in this tap is bumped automatically whenever Munehiro Yamamoto publishes
-a new [Galley release](https://github.com/munepi/Galley/releases) (see
-[`update-cask.yml`](.github/workflows/update-cask.yml)), so `brew upgrade` will pull the
-latest version once it lands here.
+The cask is bumped automatically whenever Munehiro Yamamoto publishes a new
+[Galley release](https://github.com/munepi/Galley/releases) (see
+[`update-cask.yml`](.github/workflows/update-cask.yml)), so `brew upgrade` pulls the latest
+version once it lands here. Each upgrade re-runs the signed installer, so it will ask for your
+admin password.
 
-> **Note on auto-updates:** GalleyPDF also bundles [Sparkle](https://sparkle-project.org/),
-> its own in-app updater. If you want Homebrew to be the single source of truth, you can let
-> `brew upgrade` manage updates and decline Sparkle's prompts (or vice-versa) — both pull the
-> same notarized releases from GitHub.
+> **Sparkle:** GalleyPDF also bundles [Sparkle](https://sparkle-project.org/), its own in-app
+> updater. This cask intentionally lets **Homebrew** drive updates (no `auto_updates` stanza),
+> so `brew upgrade --cask galley` works without `--greedy` — just decline Sparkle's in-app
+> prompts. Both fetch the same notarized releases from GitHub.
 
 ## Uninstall
 
