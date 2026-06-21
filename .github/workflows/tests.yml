@@ -12,6 +12,11 @@ on:
 permissions:
   contents: read
 
+env:
+  HOMEBREW_NO_INSTALL_FROM_API: 1
+  HOMEBREW_NO_AUTO_UPDATE: 1
+  HOMEBREW_NO_REQUIRE_TAP_TRUST: 1
+
 jobs:
   test:
     runs-on: macos-latest
@@ -22,16 +27,19 @@ jobs:
       - name: Check out tap
         uses: actions/checkout@v4
         with:
-          path: homebrew-galley
+          path: checkout
 
-      - name: Link checkout as a tap
+      # Install the checkout as a real tap (a git dir under Library/Taps) so the
+      # cask loader — and the Cask/* RuboCop cops — can resolve sadid/galley/galley.
+      - name: Install checkout as a tap
         run: |
-          taps="$(brew --repository)/Library/Taps/sadid"
-          mkdir -p "$taps"
-          ln -s "$GITHUB_WORKSPACE/homebrew-galley" "$taps/homebrew-galley"
+          dest="$(brew --repository)/Library/Taps/sadid/homebrew-galley"
+          mkdir -p "$(dirname "$dest")"
+          cp -R "$GITHUB_WORKSPACE/checkout" "$dest"
+          brew tap-info sadid/galley
 
       - name: brew style
-        run: brew style sadid/galley
+        run: brew style sadid/galley/galley
 
       - name: brew audit
-        run: brew audit --cask --online sadid/galley
+        run: brew audit --cask --online sadid/galley/galley
