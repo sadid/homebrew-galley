@@ -1,0 +1,60 @@
+name: Update Galley cask
+
+# Watches the upstream Galley repo for new releases and, when one appears,
+# bumps the version + sha256 in Casks/galley.rb and pushes the change.
+# That is all `brew upgrade` needs in order to pick up the new release.
+
+on:
+  schedule:
+    - cron: "0 7 * * *" # daily at 07:00 UTC
+  workflow_dispatch: {} # allow manual runs from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bump cask to latest upstream release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          cask="Casks/galley.rb"
+
+          # Latest non-prerelease tag upstream, e.g. "v0.3"
+          tag="$(gh release view --repo munepi/Galley --json tagName --jq '.tagName')"
+          version="${tag#v}"
+          echo "Upstream latest : $tag (version $version)"
+
+          current="$(grep -E '^[[:space:]]*version[[:space:]]+"' "$cask" | head -1 | sed -E 's/.*"([^"]+)".*/\1/')"
+          echo "Cask current    : $current"
+
+          if [ "$version" = "$current" ]; then
+            echo "Already up to date — nothing to do."
+            exit 0
+          fi
+
+          url="https://github.com/munepi/Galley/releases/download/v${version}/GalleyPDF_${version}.dmg"
+          echo "Downloading $url"
+          curl -fsSL -o galley.dmg "$url"
+          sha="$(sha256sum galley.dmg | awk '{print $1}')"
+          echo "New sha256      : $sha"
+
+          sed -i -E "s/^([[:space:]]*version[[:space:]]+\")[^\"]+(\")/\1${version}\2/" "$cask"
+          sed -i -E "s/^([[:space:]]*sha256[[:space:]]+\")[0-9a-f]+(\")/\1${sha}\2/" "$cask"
+          rm -f galley.dmg
+
+          if git diff --quiet -- "$cask"; then
+            echo "No file change produced — aborting."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$cask"
+          git commit -m "galley ${version}"
+          git push

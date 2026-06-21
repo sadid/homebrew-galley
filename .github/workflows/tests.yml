@@ -1,0 +1,37 @@
+name: CI
+
+# Validates the cask on every push / PR (including the automated version bumps)
+# with `brew style` and `brew audit`, so a bad bump shows up as a red check.
+
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Check out tap
+        uses: actions/checkout@v4
+        with:
+          path: homebrew-galley
+
+      - name: Link checkout as a tap
+        run: |
+          taps="$(brew --repository)/Library/Taps/sadid"
+          mkdir -p "$taps"
+          ln -s "$GITHUB_WORKSPACE/homebrew-galley" "$taps/homebrew-galley"
+
+      - name: brew style
+        run: brew style sadid/galley
+
+      - name: brew audit
+        run: brew audit --cask --online sadid/galley
