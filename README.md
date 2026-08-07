@@ -1,5 +1,16 @@
 # homebrew-galley
 
+**Note:** This repository is no longer maintained. **GalleyPDF** is now officially supported via Homebrew. Install it with:
+>
+> `brew install --cask munepi/galley/galley`
+
+
+
+----------------
+
+
+
+
 A [Homebrew](https://brew.sh) tap for **[Galley](https://github.com/munepi/Galley)** — a
 lightweight, minimalist PDF previewer for macOS built for TeX/LaTeX authors, with SyncTeX
 forward/inverse search, auto-reload, and character/measurement inspection.
